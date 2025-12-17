@@ -1,0 +1,173 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: aihorizontalpodautoscalers.aiautoscaler.io
+  labels:
+    app: ai-hpa-operator
+spec:
+  group: aiautoscaler.io
+  versions:
+  - name: v1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            required:
+            - targetDeployment
+            - prometheusService
+            - scalingConfig
+            properties:
+              targetDeployment:
+                type: string
+                description: "Name of the target deployment to scale"
+                minLength: 1
+              prometheusService:
+                type: string
+                description: "Prometheus service name/label to query metrics from"
+                minLength: 1
+              prometheusConfig:
+                type: object
+                description: "Prometheus connection configuration"
+                properties:
+                  url:
+                    type: string
+                    description: "Prometheus server URL"
+                  queryTemplate:
+                    type: string
+                    description: "Prometheus query template for HTTP requests"
+                  windowMinute:
+                    type: integer
+                    description: "Time periodic for historical data to get in minutes"
+                  timeoutSeconds:
+                    type: integer
+                    description: "Query timeout in seconds"
+                    default: 30
+                    minimum: 1
+                    maximum: 300
+              scalingConfig:
+                type: object
+                required:
+                - minReplicas
+                - maxReplicas
+                - workloadPerPod
+                properties:
+                  minReplicas:
+                    type: integer
+                    description: "Minimum number of replicas (pods_min)"
+                    minimum: 1
+                  maxReplicas:
+                    type: integer
+                    description: "Maximum number of replicas"
+                    minimum: 1
+                  workloadPerPod:
+                    type: number
+                    description: "Maximum workload (requests/minute) per pod"
+                    minimum: 1
+                  resourceRemovalStrategy:
+                    type: number
+                    description: "RRS percentage (0.0-1.0) for scaling down"
+                    minimum: 0.0
+                    maximum: 1.0
+                    default: 0.6
+                  cooldownPeriod:
+                    type: integer
+                    description: "Cooldown time in seconds after scaling"
+                    minimum: 1
+                    default: 60
+              validationThresholds:
+                type: object
+                description: "Prediction validation thresholds"
+                properties:
+                  maxSpikeMultiplier:
+                    type: number
+                    description: "Maximum allowed spike multiplier vs current load"
+                    minimum: 1.0
+                    default: 5.0
+                  maxHistoricalMultiplier:
+                    type: number
+                    description: "Maximum allowed multiplier vs historical average"
+                    minimum: 1.0
+                    default: 10.0
+          status:
+            type: object
+            properties:
+              conditions:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      enum:
+                      - "Ready"
+                      - "ModelLoaded"
+                      - "PrometheusConnected"
+                      - "Scaling"
+                      - "Error"
+                    status:
+                      type: string
+                      enum:
+                      - "True"
+                      - "False" 
+                      - "Unknown"
+                    lastTransitionTime:
+                      type: string
+                      format: date-time
+                    reason:
+                      type: string
+                    message:
+                      type: string
+              currentReplicas:
+                type: integer
+                description: "Current number of replicas"
+              desiredReplicas:
+                type: integer
+                description: "Desired number of replicas from last prediction"
+              lastScaleTime:
+                type: string
+                format: date-time
+                description: "Last time scaling action was performed"
+              lastPrediction:
+                type: number
+                description: "Last workload prediction value"
+              lastPredictionTime:
+                type: string
+                format: date-time
+                description: "Time of last prediction"
+              observedGeneration:
+                type: integer
+                description: "Most recent generation observed by controller"
+    subresources:
+      status: {}
+    additionalPrinterColumns:
+    - name: Target
+      type: string
+      description: Target deployment
+      jsonPath: .spec.targetDeployment
+    - name: Current
+      type: integer
+      description: Current replicas
+      jsonPath: .status.currentReplicas
+    - name: Desired
+      type: integer
+      description: Desired replicas
+      jsonPath: .status.desiredReplicas
+    - name: Last Prediction
+      type: number
+      description: Last prediction value
+      jsonPath: .status.lastPrediction
+    - name: Age
+      type: date
+      jsonPath: .metadata.creationTimestamp
+  scope: Namespaced
+  names:
+    plural: aihorizontalpodautoscalers
+    singular: aihorizontalpodautoscaler
+    kind: AIHorizontalPodAutoscaler
+    shortNames:
+    - aihpa
+    - ai-hpa
