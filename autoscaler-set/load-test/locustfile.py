@@ -23,12 +23,6 @@ class RequestTracker:
     """
     
     def __init__(self):
-        """
-        Initialize RequestTracker with default values.
-        
-        Creates a new CSV file with timestamp and sets up tracking structures
-        for counting requests per minute.
-        """
         self.request_counts = defaultdict(int)
         self.start_time = None
         self.lock = threading.Lock()
@@ -36,12 +30,6 @@ class RequestTracker:
         self.last_logged_minute = -1
         
     def record_request(self):
-        """
-        Record a single request in the current minute bucket.
-        
-        Initializes start_time on first request and increments the counter
-        for the current minute mark.
-        """
         if self.start_time is None:
             self.start_time = time.time()
             
@@ -52,22 +40,11 @@ class RequestTracker:
             self.request_counts[minute_mark] += 1
     
     def initialize_csv(self):
-        """
-        Create CSV file and write header row.
-        
-        Sets up the CSV file with columns for timestamp and requests per minute.
-        """
         with open(self.csv_filename, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(['Timestamp', 'Requests_Per_Minute'])
     
     def log_minute_data(self):
-        """
-        Log all completed minutes that haven't been written to CSV yet.
-        
-        Writes request counts for each completed minute to the CSV file with
-        corresponding timestamps. Prints confirmation for each logged minute.
-        """
         if self.start_time is None:
             return
             
@@ -94,22 +71,15 @@ tracker = RequestTracker()
 @events.request.add_listener
 def on_request(request_type, name, response_time, response_length, response, 
                context, exception, **kwargs):
-    """Record each request in the tracker."""
     tracker.record_request()
 
 
 @events.test_start.add_listener
 def on_test_start(environment, **kwargs):
-    """Initialize CSV file when test starts."""
     tracker.initialize_csv()
 
 
 def csv_logger():
-    """
-    Background thread function for periodic CSV logging.
-    
-    Runs continuously, logging completed minute data every 60 seconds.
-    """
     while True:
         time.sleep(60)
         tracker.log_minute_data()
@@ -120,15 +90,10 @@ csv_thread.start()
 
 
 class WebsiteUser(HttpUser):
-    """
-    Locust user class for load testing.
-    
-    Simulates user behavior by making HTTP GET requests to the root endpoint
-    with random wait times between requests.
-    """
-    
     wait_time = between(0.5, 2)
-    host = 'http://192.168.49.2:30500/'
+
+    # host = 'http://192.168.49.2:30500/'
+    host = ''
     
     @task
     def test_endpoint(self):
@@ -138,20 +103,12 @@ class WebsiteUser(HttpUser):
 
 class MyLoadShape(LoadTestShape):
     """
-    Smooth wave pattern load shape with random noise.
-    
     Creates a sinusoidal wave pattern of users with added random variation
     to simulate realistic traffic patterns. User count oscillates between
     min_users and max_users over the specified wave_length period.
     """
     
     def __init__(self):
-        """
-        Initialize load shape parameters.
-        
-        Sets up wave pattern with minimum 25 users, maximum 150 users,
-        180-second wave cycle, and 20% random noise factor.
-        """
         super().__init__()
         self.min_users = 25
         self.max_users = 150
@@ -159,15 +116,6 @@ class MyLoadShape(LoadTestShape):
         self.random_factor = 0.2
         
     def tick(self):
-        """
-        Calculate user count and spawn rate for current time.
-        
-        Combines sinusoidal wave with random noise to determine the number
-        of users. Spawn rate is calculated as 10% of target user count.
-        
-        Returns:
-            tuple: (user_count, spawn_rate) for this tick
-        """
         run_time = self.get_run_time()
         
         base_wave = math.sin(2 * math.pi * run_time / self.wave_length)
