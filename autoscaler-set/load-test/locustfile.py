@@ -1,3 +1,4 @@
+import os
 import csv
 import math
 import random
@@ -7,6 +8,9 @@ from collections import defaultdict
 from datetime import datetime
 
 from locust import HttpUser, LoadTestShape, between, events, task
+from dotenv import load_dotenv
+
+load_dotenv()
 
 RANDOM_SEED = 42
 random.seed(RANDOM_SEED)
@@ -92,8 +96,7 @@ csv_thread.start()
 class WebsiteUser(HttpUser):
     wait_time = between(0.5, 2)
 
-    # host = 'http://192.168.49.2:30500/'
-    host = ''
+    host = os.getenv('TEST_APP_URL')
     
     @task
     def test_endpoint(self):

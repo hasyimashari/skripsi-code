@@ -7,6 +7,10 @@ import csv
 from typing import Dict
 from datetime import datetime
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 from kubernetes_asyncio import client as async_client, config as async_config
@@ -77,12 +81,12 @@ class AIHorizontalPodAutoscaler:
             
             # Initialize AI model
             print("Loading AI model...")
-            self.model_handler = ModelHandler("./autoscaler/model/bilstm_bo_opt/")
+            self.model_handler = ModelHandler(os.getenv('USED_MODEL_PATH'))
             print("AI model loaded successfully")
             
             # Initialize Prometheus client
             print("Initializing Prometheus client...")
-            self.prometheus_client = PrometheusClient("http://192.168.49.2:30000/")
+            self.prometheus_client = PrometheusClient(os.getenv('PROMETHEUS_URL'))
             print("Prometheus client initialized")
             
             # Load initial CRD configurations

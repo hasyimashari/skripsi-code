@@ -7,7 +7,7 @@ spec:
   targetDeployment: test-app
   prometheusService: prometheus-service
   prometheusConfig:
-    # url: "http://192.168.49.2:30000/"
+    # url: "{minikube_ip}:{prometheus_port}/"
     url: ""
     queryTemplate: "sum(rate(flask_requests_total[1m])) * 60"
     windowMinute: 10
