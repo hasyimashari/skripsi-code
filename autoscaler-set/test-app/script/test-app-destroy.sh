@@ -30,7 +30,6 @@ safe_delete() {
     fi
 }
 
-echo "Removing Grafana resources..."
 safe_delete "service" "test-app-service" "test-autoscaler"
 safe_delete "deployment" "test-app" "test-autoscaler"
 
