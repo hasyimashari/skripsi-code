@@ -8,7 +8,7 @@ spec:
   prometheusService: prometheus-service
   prometheusConfig:
     # url: "{minikube_ip}:{prometheus_port}/"
-    url: ""
+    url: "http://192.168.49.2:30000/"
     queryTemplate: "sum(rate(flask_requests_total[1m])) * 60"
     windowMinute: 10
     timeoutSeconds: 30
