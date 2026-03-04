@@ -22,7 +22,7 @@ spec:
       containers:
       - name: test-app
         image: test-app:latest
-        imagePullPolicy: Never #for local testing
+        imagePullPolicy: Never
         ports:
         - containerPort: 5000
         resources:
