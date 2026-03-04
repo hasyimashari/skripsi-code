@@ -1,4 +1,4 @@
-from typing import List, Optional, Dict, Any
+from typing import Optional, Dict, Any
 from datetime import datetime, timedelta
 import time
 
@@ -27,15 +27,12 @@ class PrometheusClient:
         self.session = requests.Session()
         self.client_lock = threading.Lock()
         
-        # Default query template
         self.default_query_template = 'sum(rate(flask_requests_total[1m])) * 60'
         
-        # Connection status
         self.last_successful_query = None
         self.consecutive_failures = 0
         self.is_healthy = False
         
-        # Test connection on initialization
         self._test_connection()
     
     def _test_connection(self):
@@ -126,20 +123,17 @@ class PrometheusClient:
             
             for series in result_data:
                 if 'value' in series:
-                    # Instant query result
                     timestamp_str, value_str = series['value']
                     timestamp = datetime.fromtimestamp(float(timestamp_str))
                     value = float(value_str) if value_str != 'NaN' else 0.0
                     parsed_data.append((timestamp, value))
                     
                 elif 'values' in series:
-                    # Range query result
                     for timestamp_str, value_str in series['values']:
                         timestamp = datetime.fromtimestamp(float(timestamp_str))
                         value = float(value_str) if value_str != 'NaN' else 0.0
                         parsed_data.append((timestamp, value))
             
-            # Sort by timestamp
             parsed_data.sort(key=lambda x: x[0])
             
             return parsed_data
@@ -150,40 +144,33 @@ class PrometheusClient:
     def get_historical_workload(self, query_config: QueryConfig):
         with self.client_lock:
             try:
-                # Use provided template or default
                 template = query_config.query_template or self.default_query_template
                 query = template.format(service=query_config.service_name)
                 
-                # Calculate time range
                 end_time = datetime.now()
                 start_time = end_time - timedelta(minutes=query_config.window_minutes)
                 
-                # Execute range query
                 data = self._execute_range_query(query, start_time, end_time, "1m")
                 if data is None:
                     return None
                 
-                # Parse result
                 parsed_data = self._parse_query_result(data)
                 if not parsed_data:
                     return [0.0] * query_config.window_minutes
                 
-                # Ensure we have exactly window_minutes data points
                 historical_values = []
                 expected_timestamps = []
                 
-                # Generate expected timestamps (1-minute intervals)
                 for i in range(query_config.window_minutes):
                     expected_timestamps.append(end_time - timedelta(minutes=query_config.window_minutes - 1 - i))
                 
                 for expected_ts in expected_timestamps:
-                    # Find closest data point within 30 seconds
                     closest_value = 0.0
                     closest_diff = float('inf')
                     
                     for data_ts, data_value in parsed_data:
                         diff = abs((data_ts - expected_ts).total_seconds())
-                        if diff < closest_diff and diff <= 30:  # Within 30 seconds
+                        if diff < closest_diff and diff <= 30:
                             closest_diff = diff
                             closest_value = data_value
                     

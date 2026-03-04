@@ -21,6 +21,7 @@ class ModelHandler:
         
         self.sequence_length = 10
         self.input_shape = (1, 10, 1)
+        self.last_historical_data = None
 
         self._load_model()
     
@@ -94,8 +95,9 @@ class ModelHandler:
                 return None
 
         processed_data = self._preprocess_data(historical_data, scaler)
+        
         if processed_data is None:
-            return None
+            processed_data = self._preprocess_data(self.last_historical_data, scaler)
         
         with self.model_lock:
             prediction = self._predict_raw(processed_data)
@@ -107,5 +109,7 @@ class ModelHandler:
         
         if not self._validate_prediction(scaled_prediction, historical_data, thresholds):
             return None
+            
+        self.last_historical_data = historical_data
 
         return scaled_prediction

@@ -8,13 +8,13 @@ from datetime import datetime, timedelta
 class ScalingConfig:
     min_replicas: int
     max_replicas: int
-    workload_per_pod: int  # Maximum requests/minute per pod
-    resource_removal_strategy: float  # RRS percentage (0.0 to 1.0)
-    cooldown_period: int  # CDT in seconds
+    workload_per_pod: int
+    resource_removal_strategy: float
+    cooldown_period: int
 
 @dataclass
 class ScalingDecision:
-    action: str  # "scale_out", "scale_in", "no_action"
+    action: str 
     target_replicas: int
     current_replicas: int
     predicted_workload: float
@@ -69,7 +69,6 @@ class ScalingAlgorithm:
                                    current_replicas: int,
                                    config: ScalingConfig):
         try:
-            # Check if we're in cooldown period (CDT)
             if self._is_in_cooldown(deployment_name, config.cooldown_period):
                 cooldown_remaining = self._get_cooldown_remaining(deployment_name, config.cooldown_period)
                 return ScalingDecision(
@@ -80,12 +79,9 @@ class ScalingAlgorithm:
                     reason=f"In cooldown period, {cooldown_remaining}s remaining"
                 )
             
-            # Calculate required pods for next interval (pods_t+1)
             pods_required = max(self._calculate_required_pods(predicted_workload, config.workload_per_pod), config.min_replicas)
 
-            # Apply Scaling Algorithm logic
             if pods_required > current_replicas:
-                # Scale out scenario
                 target_replicas = min(pods_required, config.max_replicas)
                 decision = ScalingDecision(
                     action="scale_out",
@@ -96,17 +92,12 @@ class ScalingAlgorithm:
                 )
                 
             elif pods_required < current_replicas:
-                # Scale in scenario with RRS
-                # Step 1: Ensure we don't go below minimum
                 pods_adjusted = max(pods_required, config.min_replicas)
-                
-                # Step 2: Calculate surplus pods using RRS
+
                 pods_surplus = math.ceil((current_replicas - pods_adjusted) * config.resource_removal_strategy)
                 
-                # Step 3: Calculate final target replicas
                 target_replicas = current_replicas - pods_surplus
                 
-                # Ensure we don't go below minimum after RRS calculation
                 target_replicas = max(target_replicas, config.min_replicas)
                 
                 decision = ScalingDecision(
@@ -120,7 +111,6 @@ class ScalingAlgorithm:
                 )
                 
             else:
-                # No scaling needed
                 decision = ScalingDecision(
                     action="no_action",
                     target_replicas=current_replicas,
