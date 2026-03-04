@@ -16,17 +16,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-logging.basicConfig(
-    level=logging.WARNING,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('locust.log')
-    ]
-)
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
 SEED = int(os.getenv('SEED'))
 MIN_RPS = int(os.getenv('MIN_RPS'))    
 MAX_RPS = int(os.getenv('MAX_RPS'))   
@@ -57,7 +46,7 @@ class RequestTracker:
         self.lock = threading.Lock()
         self.last_logged_minute = -1
         
-        self.csv_dir = "./test-result"
+        self.csv_dir = "./load-test-data"
         csv_filename = f"requests_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
         
         self.csv_file = os.path.join(self.csv_dir, csv_filename)

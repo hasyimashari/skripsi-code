@@ -14,7 +14,7 @@ spec:
     timeoutSeconds: 30
   scalingConfig:
     minReplicas: 2
-    maxReplicas: 25
+    maxReplicas: 128
     workloadPerPod: 500
     resourceRemovalStrategy: 0.6
     cooldownPeriod: 60

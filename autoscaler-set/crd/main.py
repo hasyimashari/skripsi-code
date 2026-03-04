@@ -420,7 +420,7 @@ class AIHorizontalPodAutoscaler:
                     config['error_count'] += 1
             else:
                 print(" -> no scaling action needed")
-                logger.info(" -> no scaling action needed")
+                logger.info("no scaling action needed")
                 config['error_count'] = 0
             
             config['last_processed'] = datetime.now()
